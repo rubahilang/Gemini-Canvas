@@ -1,4 +1,4 @@
-# Gemini Canvas – Generate & Edit by ID
+# Gemini Canvas – Powerfull AI Tools for Coding
 
 Gemini Canvas is a web application built with Node.js and Express that leverages the Google Gemini API to generate and edit HTML, CSS, and JavaScript code dynamically based on user prompts. With a modern Tailwind CSS interface, users can save their prompt history, preview their code in real time, and download the result as a ZIP archive.
 
