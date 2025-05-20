@@ -106,5 +106,9 @@ Contributions are welcome! Feel free to open issues or submit pull requests for:
 
 ## Special Thanks
 
-- [Gemini API](https://aistudio.google.com/app/apikey) — for providing powerful language understanding and generation.
-- [waifu.im](https://www.waifu.im/) — for offering a beautiful collection of anime-style character images through their API.
+- [Gemini API](https://aistudio.google.com/app/apikey) — for providing powerful language understanding and generation.  
+- [waifu.im](https://www.waifu.im/) — for offering a beautiful collection of anime-style character images through their API.  
+- [avatar.iran.liara.run](https://avatar.iran.liara.run) — for serving customizable avatar generation through a simple and fast API.  
+- [picsum.photos](https://picsum.photos) — for providing random and placeholder images perfect for prototyping and UI design.  
+- [The Cat API](https://api.thecatapi.com) — for delivering endless cuteness with a wide range of cat images and data.
+
