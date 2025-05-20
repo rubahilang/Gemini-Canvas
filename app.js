@@ -43,14 +43,31 @@ function parseSegments(text) {
 }
 
 async function fillImagePlaceholders(text) {
-  const ids = [...text.matchAll(/\{img(\d+)\}/g)].map(m=>m[1]);
-  for (const i of new Set(ids)) {
+  // Deteksi {imgN}
+  const imgIds = [...text.matchAll(/\{img(\d+)\}/g)].map(m => m[1]);
+
+  for (const i of new Set(imgIds)) {
     const r = await fetch("https://api.waifu.im/search");
     const j = await r.json();
-    if (j.images?.[0]?.url) text = text.replaceAll(`{img${i}}`, j.images[0].url);
+    if (j.images?.[0]?.url) {
+      text = text.replaceAll(`{img${i}}`, j.images[0].url);
+    }
   }
+
+  // Deteksi {catN}
+  const catIds = [...text.matchAll(/\{cat(\d+)\}/g)].map(m => m[1]);
+
+  for (const i of new Set(catIds)) {
+    const r = await fetch("https://api.thecatapi.com/v1/images/search");
+    const j = await r.json();
+    if (j?.[0]?.url) {
+      text = text.replaceAll(`{cat${i}}`, j[0].url);
+    }
+  }
+
   return text;
 }
+
 
 async function loadUsers() {
   let raw = await fs.readFile("./data/users.json","utf-8");
