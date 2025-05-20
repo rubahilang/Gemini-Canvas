@@ -2,6 +2,8 @@
 
 Gemini Canvas is a web application built with Node.js and Express that leverages the Google Gemini API to generate and edit HTML, CSS, and JavaScript code dynamically based on user prompts. With a modern Tailwind CSS interface, users can save their prompt history, preview their code in real time, and download the result as a ZIP archive.
 
+![Preview](videos/demo.gif)
+
 ## Features
 
 - **Code Generation**  
@@ -101,3 +103,8 @@ Contributions are welcome! Feel free to open issues or submit pull requests for:
 - Bug fixes  
 - Performance optimizations  
 - New features or enhancements  
+
+## Special Thanks
+
+- [Gemini API](https://aistudio.google.com/app/apikey) — for providing powerful language understanding and generation.
+- [waifu.im](https://www.waifu.im/) — for offering a beautiful collection of anime-style character images through their API.
