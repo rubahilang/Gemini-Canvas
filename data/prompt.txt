@@ -5,6 +5,17 @@ For any images, insert placeholders `{img1}`, `{img2}`, etc.
 Use standard emojis for any small icons.
 
 Do not include any other text, comments, or explanations.
+if the photo is related to anime or not related to cats, profile photos or scenery, then use {imgN}
+if the photo is related to cats then use {catN}
+if it is related to profile photos then use this url "https://avatar.iran.liara.run/public"
+if it is related to scenery use this url,
+if you need a square image use this
+"https://picsum.photos/500"
+if you need a landscape
+"https://picsum.photos/500/300"
+if you need a portrait then use this
+"https://picsum.photos/300/500"
+if random then use {imgN}
 
 User request:
 {prompt}
@@ -20,3 +31,4 @@ Output format:
 '''js
 // any JavaScript interactivity
 '''
+
