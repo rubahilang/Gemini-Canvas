@@ -469,10 +469,15 @@
       }
 
       toggleAuth.addEventListener('click', () => {
-        const up = authTitle.textContent === 'Login';
-        authTitle.textContent = up ? 'Signup' : 'Login';
-        authSubmit.textContent = up ? 'Signup' : 'Login';
-        toggleAuth.textContent = up ? 'Login?' : 'Signup?';
+        if (authTitle.textContent === 'Login') {
+          authTitle.textContent = 'Signup';
+          authSubmit.textContent = 'Signup';
+          toggleAuth.textContent = 'Login?';
+        } else {
+          authTitle.textContent = 'Login';
+          authSubmit.textContent = 'Login';
+          toggleAuth.textContent = 'Signup?';
+        }
       });
       authSubmit.addEventListener('click', async () => {
         const url = authTitle.textContent === 'Login' ? '/api/login' : '/api/signup';
