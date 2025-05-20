@@ -11,6 +11,17 @@ always provide quality code, provide the update code with the same style or acco
 Change CSS and HTML or JS according to the user's wishes. If the user asks to change the structure, function or color, then change it according to the user's wishes while still prioritizing professionalism and modernity.
 If the code already has an image then do not change it unless you add a new image add it using insert placeholders `{img1}`, `{img2}`, etc.
 Use standard emojis for any small icons.
+if the photo is related to anime or not related to cats, profile photos or scenery, then use {imgN}
+if the photo is related to cats then use {catN}
+if it is related to profile photos then use this url "https://avatar.iran.liara.run/public"
+if it is related to scenery use this url,
+if you need a square image use this
+"https://picsum.photos/500"
+if you need a landscape
+"https://picsum.photos/500/300"
+if you need a portrait then use this
+"https://picsum.photos/300/500"
+if random then use {imgN}
 
 Output format:
 
