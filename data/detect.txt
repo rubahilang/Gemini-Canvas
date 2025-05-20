@@ -1,0 +1,6 @@
+You are a helpful classifier. The user wants to “edit” their web page with this instruction:
+
+{prompt}
+
+Decide which single file this change applies to: **html**, **css**, or **js**.  
+Respond with exactly one word: html, css, or js.

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full" data-theme="dark">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FoxCanvas – Generate & Edit by ID</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['class', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: { accent: { DEFAULT: '#4F46E5', hover: '#4338CA' } }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      transition: background-color .3s, color .3s;
+    }
+
+    #downloadBtn img {
+      filter: invert(1);
+      width: 24px;
+      height: 24px;
+    }
+
+    /* Make sure each history link is on one line and truncated */
+    #historyList a {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Toast */
+    #popup {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      padding: .75rem 1.25rem;
+      border-radius: .5rem;
+      opacity: 0;
+      transition: opacity .3s;
+      z-index: 60;
+    }
+
+    /* Auth modal */
+    #authModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 70;
+    }
+
+    #authBox {
+      background: #1f2937;
+      color: darkblue;
+      padding: 2rem;
+      border-radius: .5rem;
+      width: 320px;
+      text-align: center;
+    }
+
+    #authBox input {
+      width: 100%;
+      margin-bottom: .75rem;
+      padding: .5rem;
+      border: 1px solid #ccc;
+      border-radius: .25rem;
+    }
+
+    #authBox button {
+      width: 100%;
+      padding: .5rem;
+      background: #4F46E5;
+      color: white;
+      border: none;
+      border-radius: .25rem;
+    }
+
+    #authBox .toggle {
+      margin-top: .5rem;
+      color: #4F46E5;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* History drawer */
+    #historyDrawer {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100%;
+      background: #121a2f;
+      color: white;
+      transition: left .3s;
+      z-index: 40;
+      padding: 1rem;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+      border-top-right-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+    }
+
+    #historyDrawer.open {
+      left: 0;
+    }
+
+    #historyDrawer a {
+      display: block;
+      padding: .5rem .75rem;
+      margin-bottom: .5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: .25rem;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    #historyDrawer a:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-icon {
+      filter: invert(1);
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    /* Mode tabs */
+    .mode-btn {
+      padding: .5rem 1rem;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: rgb(79 70 229 / 70%);
+      color: #ffffff;
+      border-radius: 10px;
+    }
+
+    /* Generate/Edit UI containers */
+    #generateUI,
+    #editUI {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    #editUI {
+      display: none;
+    }
+
+    /* Prompt textarea full height */
+    #promptInput,
+    #promptInputEdit {
+      flex: 1;
+      height: 100%;
+      resize: none;
+    }
+
+    /* Output tabs */
+    .tab-btn {
+      padding: .5rem 1rem;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--tw-text-gray-500);
+      transition: color .2s;
+    }
+
+    .tab-btn.active {
+      border-bottom: 2px solid #4F46E5;
+      color: #4F46E5;
+    }
+
+    /* Containers */
+    #containers {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      gap: 1rem;
+    }
+
+    #containers>div {
+      display: none;
+      flex: 1;
+      min-height: 0;
+    }
+
+    pre {
+      background: #1f2937;
+      color: #a7f3d0;
+      padding: 1rem;
+      overflow: auto;
+      flex: 1;
+      min-height: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
+    }
+
+    pre::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    pre::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+
+    pre::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    pre::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    #prevContainer {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      background: white;
+      /* Latar belakang putih untuk kontras */
+    }
+
+    iframe {
+      flex: 1;
+      border: 1px solid #374151;
+      min-height: 0;
+    }
+
+    /* Initially hidden */
+    #dynamicTabs,
+    #downloadBtn {
+      display: none;
+    }
+
+    #previewFrame {
+      flex: 1;
+      border: 1px solid #374151;
+      min-height: 0;
+      background: white;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body class="h-full flex bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+  <!-- Toast -->
+  <div id="popup"></div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="flex">
+    <div id="authBox">
+      <h2 id="authTitle" style="color: white; margin-bottom: 10px;">Login</h2>
+      <input id="authUser" type="text" placeholder="Username" />
+      <input id="authPass" type="password" placeholder="Password" />
+      <button id="authSubmit">Login</button>
+      <div id="toggleAuth" class="toggle">Signup?</div>
+    </div>
+  </div>
+
+<!-- History Drawer -->
+<div id="historyDrawer" style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">
+  <div class="top" style="padding:0.5rem 1rem; border-bottom:1px solid #e5e7eb; text-align:center;">
+    <a
+      href="/"
+      style="background-color:rgb(0 58 255 / 23%); color:#ffffff; padding:0.25rem 0.75rem; border-radius:0.25rem; font-weight:600; text-decoration:none; transition:background-color 0.3s;"
+      onmouseover="this.style.backgroundColor='rgb(0 58 255 / 50%)';"
+      onmouseout="this.style.backgroundColor='rgb(0 58 255 / 23%)';"
+    >
+      New Chat
+    </a>
+  </div>
+  <div class="history-list" style="flex:1; overflow-y:auto; padding:0.5rem 1rem;">
+    <h3 style="font-size:1.125rem; margin-bottom:0.5rem;">Your History</h3>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+
+
+  <!-- Sidebar -->
+  <aside class="w-1/4 min-w-[280px] bg-white dark:bg-gray-800 border-r p-6 flex flex-col relative">
+    <div class="flex items-center mb-4">
+      <img id="historyIcon" src="https://cdn-icons-png.flaticon.com/512/12252/12252568.png" class="sidebar-icon mr-2"
+        alt="History" />
+      <h2 class="text-2xl font-semibold">Gemini Canvas</h2>
+    </div>
+    <div class="flex space-x-4 mb-4">
+      <button id="tabGenerate" class="mode-btn active">Generate</button>
+      <button id="tabEdit" class="mode-btn">Edit</button>
+    </div>
+    <div id="generateUI" class="flex flex-col">
+      <textarea id="promptInput" placeholder="Type your prompt..."
+        class="bg-gray-50 dark:bg-gray-700 border rounded-lg p-3 mb-4"></textarea>
+      <button id="generateBtn"
+        class="w-full py-3 bg-accent hover:bg-accent-hover text-white rounded-lg">Generate</button>
+    </div>
+    <div id="editUI" class="flex flex-col">
+      <textarea id="promptInputEdit" placeholder="Edit prompt..."
+        class="bg-gray-50 dark:bg-gray-700 border rounded-lg p-3 mb-4"></textarea>
+      <button id="generateBtnEdit" class="w-full py-3 bg-accent hover:bg-accent-hover text-white rounded-lg">Apply
+        Edit</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="w-3/4 p-6 flex flex-col h-full">
+    <h2 class="text-2xl font-semibold mb-4">Output</h2>
+    <div class="flex items-center border-b pb-2 mb-4">
+      <div id="dynamicTabs" class="flex space-x-4"></div>
+      <button id="downloadBtn" class="ml-auto p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+        <img src="https://cdn-icons-png.flaticon.com/512/10419/10419391.png" alt="Download" />
+      </button>
+    </div>
+    <div id="containers" class="flex flex-col flex-1 min-h-0 gap-4"></div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let mode = "generate", currentId = null;
+      const TYPES = ['html', 'css', 'js'];
+      let segments = { html: '', css: '', js: '' };
+      let previewFrame = null;
+      let lastPreviewContent = '';
+
+      const popup = document.getElementById('popup');
+      const authModal = document.getElementById('authModal');
+      const authTitle = document.getElementById('authTitle');
+      const authUser = document.getElementById('authUser');
+      const authPass = document.getElementById('authPass');
+      const authSubmit = document.getElementById('authSubmit');
+      const toggleAuth = document.getElementById('toggleAuth');
+      const historyIcon = document.getElementById('historyIcon');
+      const historyDrawer = document.getElementById('historyDrawer');
+      const historyList = document.getElementById('historyList');
+      const tabGenerate = document.getElementById('tabGenerate');
+      const tabEdit = document.getElementById('tabEdit');
+      const generateUI = document.getElementById('generateUI');
+      const editUI = document.getElementById('editUI');
+      const promptInput = document.getElementById('promptInput');
+      const generateBtn = document.getElementById('generateBtn');
+      const promptInputE = document.getElementById('promptInputEdit');
+      const generateBtnE = document.getElementById('generateBtnEdit');
+      const dynamicTabs = document.getElementById('dynamicTabs');
+      const containers = document.getElementById('containers');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      const loaderSvg = `<svg class="animate-spin inline-block w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                         </svg>`;
+
+      function showPopup(msg) {
+        popup.textContent = msg;
+        popup.style.opacity = 1;
+        setTimeout(() => popup.style.opacity = 0, 3000);
+      }
+
+      function createContainer(key) {
+        const d = document.createElement('div');
+        d.id = key + 'Container';
+        d.style.display = (key === 'html') ? 'flex' : 'none';
+        d.style.flex = '1';
+        d.style.minHeight = '0';
+
+        if (key === 'prev') {
+          d.innerHTML = `
+            <iframe 
+              id="previewFrame" 
+              sandbox="allow-scripts allow-same-origin"
+              style="width:100%;height:100%;border:1px solid #374151;background:white;"
+            ></iframe>`;
+          containers.appendChild(d);
+          previewFrame = document.getElementById('previewFrame');
+          initIframeContent();
+        } else {
+          d.innerHTML = `<pre id="${key}Output"></pre>`;
+          containers.appendChild(d);
+        }
+      }
+
+      function initIframeContent() {
+        if (!previewFrame) return;
+        const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        doc.open();
+        doc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body { 
+                  margin: 0; 
+                  padding: 16px;
+                  font-family: Arial, sans-serif;
+                  background: white;
+                  color: #333;
+                }
+              </style>
+            </head>
+            <body><div id="content"></div></body>
+          </html>
+        `);
+        doc.close();
+      }
+
+      function rebuildPreview() {
+        if (!previewFrame) return;
+        const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        doc.open();
+        doc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head><style>${segments.css}</style></head>
+            <body>
+              ${segments.html}
+              <script>${segments.js}<\/script>
+            </body>
+          </html>
+        `);
+        doc.close();
+      }
+
+      function showTab(key) {
+        Array.from(dynamicTabs.children).forEach(b => {
+          b.classList.toggle('active', b.dataset.key === key);
+        });
+        Array.from(containers.children).forEach(c => {
+          c.style.display = (c.id === key + 'Container') ? 'flex' : 'none';
+        });
+        if (key === 'prev') {
+          setTimeout(rebuildPreview, 50);
+        }
+      }
+
+      async function fetchAuth(url, opts) {
+        const res = await fetch(url, { ...opts, credentials: 'include' });
+        if (res.status === 401) {
+          authModal.style.display = 'flex';
+          throw new Error('not logged in');
+        }
+        return res;
+      }
+
+      async function detectFile(p) {
+        const res = await fetchAuth('/api/detect-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: p })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        return data.fileType;
+      }
+
+      toggleAuth.addEventListener('click', () => {
+        const up = authTitle.textContent === 'Login';
+        authTitle.textContent = up ? 'Signup' : 'Login';
+        authSubmit.textContent = up ? 'Signup' : 'Login';
+        toggleAuth.textContent = up ? 'Login?' : 'Signup?';
+      });
+      authSubmit.addEventListener('click', async () => {
+        const url = authTitle.textContent === 'Login' ? '/api/login' : '/api/signup';
+        const res = await fetch(url, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: authUser.value, password: authPass.value })
+        });
+        if (res.ok) {
+          authModal.style.display = 'none';
+          if (currentId) loadById(currentId);
+        } else {
+          showPopup('Authentication failed');
+        }
+      });
+
+      historyIcon.addEventListener('click', () => {
+        historyDrawer.classList.toggle('open');
+        if (historyDrawer.classList.contains('open')) loadHistory();
+      });
+      async function loadHistory() {
+        const res = await fetchAuth('/api/history');
+        const list = await res.json();
+        historyList.innerHTML = '';
+        list.forEach(({ id, title }) => {
+          const a = document.createElement('a');
+          a.href = `/${id}`; a.textContent = title || id;
+          a.addEventListener('click', e => {
+            e.preventDefault();
+            currentId = id;
+            history.pushState({}, '', `/${id}`);
+            loadById(id);
+            historyDrawer.classList.remove('open');
+          });
+          historyList.appendChild(a);
+        });
+      }
+      document.addEventListener('click', e => {
+        if (historyDrawer.classList.contains('open') && !historyDrawer.contains(e.target) && !historyIcon.contains(e.target))
+          historyDrawer.classList.remove('open');
+      });
+
+      tabGenerate.addEventListener('click', () => {
+        mode = 'generate';
+        tabGenerate.classList.add('active');
+        tabEdit.classList.remove('active');
+        generateUI.style.display = 'flex';
+        editUI.style.display = 'none';
+      });
+      tabEdit.addEventListener('click', () => {
+        mode = 'edit';
+        tabEdit.classList.add('active');
+        tabGenerate.classList.remove('active');
+        editUI.style.display = 'flex';
+        generateUI.style.display = 'none';
+      });
+
+      async function handler(p) {
+        try {
+          if (mode === 'generate') {
+            generateBtn.innerHTML = loaderSvg + 'Generating...';
+            const r1 = await fetchAuth('/api/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: p })
+            });
+            const d1 = await r1.json();
+            if (!r1.ok) throw new Error(d1.error || r1.statusText);
+            currentId = d1.id;
+            const r2 = await fetchAuth(`/api/code/${currentId}`);
+            const codes = await r2.json();
+            segments = {}; dynamicTabs.innerHTML = ''; containers.innerHTML = '';
+            TYPES.forEach(key => {
+              segments[key] = codes[key] || '';
+              const b = document.createElement('button');
+              b.textContent = key.toUpperCase();
+              b.dataset.key = key;
+              b.className = 'tab-btn';
+              b.onclick = () => showTab(key);
+              dynamicTabs.appendChild(b);
+              createContainer(key);
+              document.getElementById(key + 'Output').textContent = segments[key];
+            });
+            const bp = document.createElement('button');
+            bp.textContent = 'Preview';
+            bp.dataset.key = 'prev';
+            bp.className = 'tab-btn';
+            bp.onclick = () => showTab('prev');
+            dynamicTabs.appendChild(bp);
+            createContainer('prev');
+            showTab('html');
+            dynamicTabs.style.display = 'flex';
+            downloadBtn.style.display = 'block';
+          } else {
+            if (!currentId) return showPopup('No code selected to edit');
+            generateBtnE.innerHTML = loaderSvg + 'Updating Code...';
+            const ft = await detectFile(p);
+            const rEdit = await fetchAuth('/api/edit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: currentId, fileType: ft, prompt: p })
+            });
+            const d2 = await rEdit.json();
+            if (!rEdit.ok) throw new Error(d2.error || rEdit.statusText);
+            segments[d2.fileType] = d2.content;
+            document.getElementById(d2.fileType + 'Output').textContent = d2.content;
+            if (['html', 'css', 'js'].includes(d2.fileType)) rebuildPreview();
+            showTab(d2.fileType);
+          }
+        } catch (e) {
+          if (!/not logged in/i.test(e.message)) showPopup('Error: ' + e.message);
+        } finally {
+          generateBtn.innerHTML = 'Generate';
+          generateBtn.disabled = false;
+          generateBtnE.innerHTML = 'Apply Edit';
+          generateBtnE.disabled = false;
+        }
+      }
+
+      generateBtn.addEventListener('click', () => {
+        const p = promptInput.value.trim();
+        if (!p) return showPopup('Enter a prompt');
+        generateBtn.disabled = true;
+        handler(p);
+      });
+      generateBtnE.addEventListener('click', () => {
+        const p = promptInputE.value.trim();
+        if (!p) return showPopup('Enter an edit prompt');
+        generateBtnE.disabled = true;
+        handler(p);
+      });
+
+      async function loadById(id) {
+        try {
+          const r = await fetchAuth(`/api/code/${id}`);
+          const data = await r.json();
+          segments = { html: data.html, css: data.css, js: data.js };
+          dynamicTabs.innerHTML = ''; containers.innerHTML = '';
+          TYPES.forEach(key => {
+            const b = document.createElement('button');
+            b.textContent = key.toUpperCase();
+            b.dataset.key = key;
+            b.className = 'tab-btn';
+            b.onclick = () => showTab(key);
+            dynamicTabs.appendChild(b);
+            createContainer(key);
+            document.getElementById(key + 'Output').textContent = segments[key];
+          });
+          const bp = document.createElement('button');
+          bp.textContent = 'Preview';
+          bp.dataset.key = 'prev';
+          bp.className = 'tab-btn';
+          bp.onclick = () => showTab('prev');
+          dynamicTabs.appendChild(bp);
+          createContainer('prev');
+          showTab('html');
+          dynamicTabs.style.display = 'flex';
+          downloadBtn.style.display = 'block';
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      downloadBtn.addEventListener('click', () => {
+        if (!currentId) return showPopup('No code to download');
+        window.open(`/api/download/${currentId}`, '_blank');
+      });
+
+      const initId = location.pathname.slice(1);
+      if (initId) {
+        currentId = initId;
+        loadById(initId);
+      }
+    });
+  </script>
+
+</body>
+
+</html>
